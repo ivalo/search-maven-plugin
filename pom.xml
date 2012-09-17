@@ -271,5 +271,6 @@
     </site-->
   </distributionManagement>    
 
+  <groupId>jivalo.plugins</groupId>
 </project>  
 
