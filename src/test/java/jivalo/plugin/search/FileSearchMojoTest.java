@@ -19,41 +19,91 @@ import java.io.File;
 import java.net.URI;
 import java.util.LinkedList;
 
-import org.junit.Test;
+import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 
 /**
  * @author Markku Saarela
  * 
  */
-public class FileSearchMojoTest {
+public class FileSearchMojoTest extends AbstractMojoTestCase
+{
 
-  @Test
-  public void execute() throws Exception {
+    private FileSearchMojo mojo;
 
-    File searchDir = new File(System.getProperty("user.dir"));
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void setUp() throws Exception
+    {
+        // required for mojo lookups to work
+        super.setUp();
+        File testPom = new File( getBasedir(), "src/test/resources/unit/plugin-config.xml" );
+        mojo = (FileSearchMojo) lookupMojo( "file", testPom );
+    }
 
-    URI searchUri = searchDir.toURI();
+    public void testFoundFromJar() throws Exception
+    {
+        File searchDir = new File( getBasedir() );
+        URI searchUri = searchDir.toURI();
+        StringBuilder sb = new StringBuilder( searchUri.toString() );
+        sb.append( "src/test-resources/" );
+        LinkedList< String > uris = new LinkedList< String >();
+        uris.add( sb.toString() );
+        setVariableValueToObject( mojo, "directoryUris", uris );
+        setVariableValueToObject( mojo, "fileNameToSearch", "BaseBusinessDelegate.class" );
+        setVariableValueToObject( mojo, "strictName", false );
+        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        mojo.execute();
+    }
 
-    StringBuilder sb = new StringBuilder(searchUri.toString());
+    /**
+     * rsadapter.rar->rsadaptercci.jar
+     * 
+     * @throws Exception
+     */
+    public void testFoundFileFromJarInsideRar() throws Exception
+    {
+        File searchDir = new File( getBasedir() );
+        URI searchUri = searchDir.toURI();
+        StringBuilder sb = new StringBuilder( searchUri.toString() );
+        sb.append( "src/test-resources/" );
+        LinkedList< String > uris = new LinkedList< String >();
+        uris.add( sb.toString() );
+        setVariableValueToObject( mojo, "directoryUris", uris );
+        setVariableValueToObject( mojo, "fileNameToSearch", "InteractionImpl.class" );
+        setVariableValueToObject( mojo, "strictName", false );
+        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        mojo.execute();
+    }
 
-    sb.append("src/test-resources/");
+    public void testFoundFileFromInsideRar() throws Exception
+    {
+        File searchDir = new File( getBasedir() );
+        URI searchUri = searchDir.toURI();
+        StringBuilder sb = new StringBuilder( searchUri.toString() );
+        sb.append( "src/test-resources/" );
+        LinkedList< String > uris = new LinkedList< String >();
+        uris.add( sb.toString() );
+        setVariableValueToObject( mojo, "directoryUris", uris );
+        setVariableValueToObject( mojo, "fileNameToSearch", "rsadaptercci.jar" );
+        setVariableValueToObject( mojo, "strictName", false );
+        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        mojo.execute();
+    }
 
-    LinkedList<String> uris = new LinkedList<String>();
-
-    uris.add(sb.toString());
-
-    FileSearchMojo mojo = new FileSearchMojo(uris, "InteractionImpl.class", false, true);
-
-    mojo.execute();
-
-    mojo = new FileSearchMojo(uris, "rsadapter.rar", false, true);
-
-    mojo.execute();
-    
-    mojo = new FileSearchMojo(uris, "BaseBusinessDelegate.class", false, true);
-
-    mojo.execute();
-    
-
-  }
+    public void testFoundFile() throws Exception
+    {
+        File searchDir = new File( getBasedir() );
+        URI searchUri = searchDir.toURI();
+        StringBuilder sb = new StringBuilder( searchUri.toString() );
+        sb.append( "src/test-resources/" );
+        LinkedList< String > uris = new LinkedList< String >();
+        uris.add( sb.toString() );
+        setVariableValueToObject( mojo, "directoryUris", uris );
+        setVariableValueToObject( mojo, "fileNameToSearch", "rsadapter.rar" );
+        setVariableValueToObject( mojo, "strictName", false );
+        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        mojo.execute();
+    }
 }

@@ -17,6 +17,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <!-- The Basics -->
+  <groupId>jivalo.plugins</groupId>
   <artifactId>search-maven-plugin</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
@@ -68,6 +69,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
+        <version>2.3.2</version>
         <configuration>
           <preparationGoals>clean install</preparationGoals>
           <goals>deploy</goals>
@@ -271,6 +273,5 @@
     </site-->
   </distributionManagement>    
 
-  <groupId>jivalo.plugins</groupId>
 </project>  
 

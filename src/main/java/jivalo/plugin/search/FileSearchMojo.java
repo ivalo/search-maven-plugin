@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Markku Saarela 
+ * Copyright 2007 - 2012 Markku Saarela 
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,39 +28,43 @@ import java.util.zip.ZipFile;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
 /**
- * @goal file-search
- * @requiresProject false
  * 
  * @author Markku Saarela
  * 
  */
+@Mojo( name = "file", requiresProject = false, threadSafe = true )
 public class FileSearchMojo extends AbstractMojo
 {
 
     private static String NL = System.getProperty( "line.separator" );
 
     /**
-     * list of URI's.
-     * If not defined System property <code>user.dir</code> is used.
-     * @parameter directoryUris list of directories for search to be used
+     * list of URI's. If not defined System property <code>user.dir</code> is used.
+     * 
      */
+    @Parameter( required = false )
     private List< String > directoryUris;
 
     /**
-     * @parameter expression = "${search.file}"
+     * 
      */
+    @Parameter( property = "search.file", required = false )
     private String fileNameToSearch;
 
     /**
-     * @parameter default-value="true"
+     * 
      */
+    @Parameter( property = "strict", defaultValue = "true", required = false )
     private boolean strictName;
 
     /**
-     * @parameter expression = "${search.sub}" default-value="true"
+     * 
      */
+    @Parameter( property = "sub.dirs", defaultValue = "true", required = false )
     private boolean searchSubDirectories;
 
     /**
@@ -72,46 +76,15 @@ public class FileSearchMojo extends AbstractMojo
     }
 
     /**
-     * Constructor for testing.
-     * 
-     * @param directoryUris
-     * @param fileNameToSearch
-     * @param strictName
-     * @param useFQCN
-     * @param searchSubDirectories
-     */
-    FileSearchMojo( final List< String > directoryUris, final String fileNameToSearch, final boolean strictName, final boolean searchSubDirectories )
-    {
-        super();
-        this.directoryUris = directoryUris;
-        this.fileNameToSearch = fileNameToSearch;
-        this.strictName = strictName;
-        this.searchSubDirectories = searchSubDirectories;
-    }
-
-    /**
      * @see org.apache.maven.plugin.Mojo#execute()
      */
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException
     {
         List< File > dirs = searchDirectoryList();
-
-        StringBuilder msg = new StringBuilder( "file-search :" );
-        msg.append( NL ).append( "\t" );
-        msg.append( "Directories to search:" ).append( dirs );
-        msg.append( NL ).append( "\t" );
-        msg.append( "fileNameToSearch=" ).append( fileNameToSearch );
-        msg.append( NL ).append( "\t" );
-        msg.append( "searchSubDirectories=" ).append( searchSubDirectories );
-        msg.append( NL ).append( "\t" );
-        msg.append( "strictName=" ).append( strictName );
-        msg.append( NL ).append( "\t" );
-        getLog().info(msg);
-
+        getLog().info( buildEntryLogMsg( dirs ) );
         if ( this.fileNameToSearch != null )
         {
-
             processResult( processDirectories( dirs ) );
         }
         else
@@ -123,14 +96,11 @@ public class FileSearchMojo extends AbstractMojo
     private void processResult( final List< String > list )
     {
         StringBuffer sb = new StringBuffer();
-
         if ( list.size() > 0 )
         {
             sb.append( "File " ).append( this.fileNameToSearch );
             sb.append( " found in these locations:" );
-
             String prefix = System.getProperty( "line.separator" ) + "\t";
-
             for ( String location : list )
             {
                 sb.append( prefix ).append( location );
@@ -149,7 +119,6 @@ public class FileSearchMojo extends AbstractMojo
 
             }
             sb.append( this.directoryUris );
-
         }
         getLog().info( sb );
     }
@@ -157,7 +126,6 @@ public class FileSearchMojo extends AbstractMojo
     private List< File > searchDirectoryList()
     {
         LinkedList< File > dirs = new LinkedList< File >();
-
         if ( this.directoryUris != null )
         {
             for ( String uri : this.directoryUris )
@@ -177,30 +145,25 @@ public class FileSearchMojo extends AbstractMojo
         {
             dirs.add( new File( System.getProperty( "user.dir" ) ) );
         }
-
         return dirs;
     }
 
     private List< String > processDirectories( final List< File > dirs )
     {
         LinkedList< String > list = new LinkedList< String >();
-
         for ( File file : dirs )
         {
             LinkedList< String > processedDirectory = processDirectory( file );
-
             if ( processedDirectory != null && !processedDirectory.isEmpty() )
             {
                 list.addAll( processedDirectory );
             }
         }
-
         return list;
     }
 
     private LinkedList< String > processDirectory( final File directory )
     {
-
         LinkedList< String > list = new LinkedList< String >();
         StringBuilder logMsg = new StringBuilder( "Start processing directory: " + directory );
         if ( null == directory || !directory.exists() )
@@ -212,20 +175,14 @@ public class FileSearchMojo extends AbstractMojo
             getLog().info( logMsg );
             return list;
         }
-
         logMsg.append( " absolute path " + directory.getAbsolutePath() );
         getLog().debug( logMsg );
-
         File[] listFiles = directory.listFiles();
-
-        for ( int i = 0; i < listFiles.length; i++ )
+        for ( File dirFile : listFiles )
         {
-            File dirFile = listFiles[i];
-
             if ( dirFile.isDirectory() && this.searchSubDirectories )
             {
                 LinkedList< String > dirList = processDirectory( dirFile );
-
                 if ( dirList != null && !dirList.isEmpty() )
                 {
                     list.addAll( dirList );
@@ -320,4 +277,18 @@ public class FileSearchMojo extends AbstractMojo
         return matchedFiles;
     }
 
+    private CharSequence buildEntryLogMsg( List< File > dirs )
+    {
+        StringBuilder msg = new StringBuilder( "file-search :" );
+        msg.append( NL ).append( "\t" );
+        msg.append( "Directories to search:" ).append( dirs );
+        msg.append( NL ).append( "\t" );
+        msg.append( "fileNameToSearch=" ).append( fileNameToSearch );
+        msg.append( NL ).append( "\t" );
+        msg.append( "searchSubDirectories=" ).append( searchSubDirectories );
+        msg.append( NL ).append( "\t" );
+        msg.append( "strictName=" ).append( strictName );
+        msg.append( NL ).append( "\t" );
+        return msg;
+    }
 }
