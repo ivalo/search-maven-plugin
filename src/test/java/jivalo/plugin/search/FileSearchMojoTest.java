@@ -42,7 +42,12 @@ public class FileSearchMojoTest extends AbstractMojoTestCase
         mojo = (FileSearchMojo) lookupMojo( "file", testPom );
     }
 
-    public void testFoundFromJar() throws Exception
+    /**
+     * jivalo-client-1.0.jar->/fi/jivalo/client/BaseBusinessDelegate.class
+     * 
+     * @throws Exception
+     */
+    public void testFoundFromJarNotStrict() throws Exception
     {
         File searchDir = new File( getBasedir() );
         URI searchUri = searchDir.toURI();
@@ -58,7 +63,29 @@ public class FileSearchMojoTest extends AbstractMojoTestCase
     }
 
     /**
-     * rsadapter.rar->rsadaptercci.jar
+     * jackrabbit-jca-2.5.1.rar->slf4j-api-1.6.4.jar
+     * 
+     * @throws Exception
+     */
+    public void testFoundFileFromInsideRar() throws Exception
+    {
+        File searchDir = new File( getBasedir() );
+        URI searchUri = searchDir.toURI();
+        StringBuilder sb = new StringBuilder( searchUri.toString() );
+        sb.append( "src/test-resources/" );
+
+        System.out.println( sb.toString() );
+        LinkedList< String > uris = new LinkedList< String >();
+        uris.add( sb.toString() );
+        setVariableValueToObject( mojo, "directoryUris", uris );
+        setVariableValueToObject( mojo, "fileNameToSearch", "slf4j-api-1.6.4.jar" );
+        setVariableValueToObject( mojo, "strictName", false );
+        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        mojo.execute();
+    }
+
+    /**
+     * jackrabbit-jca-2.5.1.rar->jackrabbit-api-2.5.1.jar!org/apache/jackrabbit/api/JackrabbitValue.class
      * 
      * @throws Exception
      */
@@ -67,31 +94,21 @@ public class FileSearchMojoTest extends AbstractMojoTestCase
         File searchDir = new File( getBasedir() );
         URI searchUri = searchDir.toURI();
         StringBuilder sb = new StringBuilder( searchUri.toString() );
-        sb.append( "src/test-resources/" );
+        sb.append( "src/test-resources/first" );
         LinkedList< String > uris = new LinkedList< String >();
         uris.add( sb.toString() );
         setVariableValueToObject( mojo, "directoryUris", uris );
-        setVariableValueToObject( mojo, "fileNameToSearch", "InteractionImpl.class" );
+        setVariableValueToObject( mojo, "fileNameToSearch", "JackrabbitValue.class" );
         setVariableValueToObject( mojo, "strictName", false );
-        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        setVariableValueToObject( mojo, "searchSubDirectories", false );
         mojo.execute();
     }
 
-    public void testFoundFileFromInsideRar() throws Exception
-    {
-        File searchDir = new File( getBasedir() );
-        URI searchUri = searchDir.toURI();
-        StringBuilder sb = new StringBuilder( searchUri.toString() );
-        sb.append( "src/test-resources/" );
-        LinkedList< String > uris = new LinkedList< String >();
-        uris.add( sb.toString() );
-        setVariableValueToObject( mojo, "directoryUris", uris );
-        setVariableValueToObject( mojo, "fileNameToSearch", "rsadaptercci.jar" );
-        setVariableValueToObject( mojo, "strictName", false );
-        setVariableValueToObject( mojo, "searchSubDirectories", true );
-        mojo.execute();
-    }
-
+    /**
+     * Find file jackrabbit-jca-2.5.1.rar
+     * 
+     * @throws Exception
+     */
     public void testFoundFile() throws Exception
     {
         File searchDir = new File( getBasedir() );
@@ -101,9 +118,30 @@ public class FileSearchMojoTest extends AbstractMojoTestCase
         LinkedList< String > uris = new LinkedList< String >();
         uris.add( sb.toString() );
         setVariableValueToObject( mojo, "directoryUris", uris );
-        setVariableValueToObject( mojo, "fileNameToSearch", "rsadapter.rar" );
+        setVariableValueToObject( mojo, "fileNameToSearch", "jackrabbit-jca-2.5.1.rar" );
         setVariableValueToObject( mojo, "strictName", false );
         setVariableValueToObject( mojo, "searchSubDirectories", true );
         mojo.execute();
     }
+
+    /**
+     * jivalo-client-1.0.jar->/fi/jivalo/client/BaseBusinessDelegate.class
+     * 
+     * @throws Exception
+     */
+    public void testFoundFileWithStrictName() throws Exception
+    {
+        File searchDir = new File( getBasedir() );
+        URI searchUri = searchDir.toURI();
+        StringBuilder sb = new StringBuilder( searchUri.toString() );
+        sb.append( "src/test-resources/first/second/" );
+        LinkedList< String > uris = new LinkedList< String >();
+        uris.add( sb.toString() );
+        setVariableValueToObject( mojo, "directoryUris", uris );
+        setVariableValueToObject( mojo, "fileNameToSearch", "fi/jivalo/client/BaseBusinessDelegate.class" );
+        setVariableValueToObject( mojo, "strictName", true );
+        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        mojo.execute();
+    }
+
 }

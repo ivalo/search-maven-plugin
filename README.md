@@ -7,13 +7,16 @@ Mainly used for searching missing dependency class (ClassNotFound) jars
 
 if plugin group definition is not done then fully qualified plugin name must be used.
 
- mvn jivalo.plugins:search-maven-plugin:file
+mvn jivalo.plugins:search-maven-plugin:file
 
- <pluginGroups>
-    <pluginGroup>jivalo.plugins</pluginGroup>
-  </pluginGroups>
+    <pluginGroups>
+      <pluginGroup>jivalo.plugins</pluginGroup>
+    </pluginGroups>
 
 If jivalo plugin groups is defined then short version of plugin is used
 
 mvn search:file
 
+Here is sample search plugin configuration:
+
+    
