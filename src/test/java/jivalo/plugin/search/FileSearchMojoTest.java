@@ -85,7 +85,7 @@ public class FileSearchMojoTest extends AbstractMojoTestCase
     }
 
     /**
-     * jackrabbit-jca-2.5.1.rar->slf4j-api-1.6.4.jar
+     * jackrabbit-jca-2.5.1.rar->jackrabbit-api-2.5.1.jar!org/apache/jackrabbit/api/JackrabbitValue.class
      * 
      * @throws Exception
      */
@@ -94,13 +94,13 @@ public class FileSearchMojoTest extends AbstractMojoTestCase
         File searchDir = new File( getBasedir() );
         URI searchUri = searchDir.toURI();
         StringBuilder sb = new StringBuilder( searchUri.toString() );
-        sb.append( "src/test-resources/" );
+        sb.append( "src/test-resources/first" );
         LinkedList< String > uris = new LinkedList< String >();
         uris.add( sb.toString() );
         setVariableValueToObject( mojo, "directoryUris", uris );
-        setVariableValueToObject( mojo, "fileNameToSearch", "InteractionImpl.class" );
+        setVariableValueToObject( mojo, "fileNameToSearch", "JackrabbitValue.class" );
         setVariableValueToObject( mojo, "strictName", false );
-        setVariableValueToObject( mojo, "searchSubDirectories", true );
+        setVariableValueToObject( mojo, "searchSubDirectories", false );
         mojo.execute();
     }
 

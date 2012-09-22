@@ -238,70 +238,68 @@ public class FileSearchMojo extends AbstractMojo
         LinkedList< String > matchedFiles = new LinkedList< String >();
         while ( entries.hasMoreElements() )
         {
-            ZipEntry entry = entries.nextElement();
-            if ( !entry.isDirectory() )
-            {
-                if ( ( ( !strictName && entry.getName().endsWith( this.fileNameToSearch ) ) || ( strictName && entry
-                        .getName().equals( this.fileNameToSearch ) ) ) )
-                {
-                    matchedFiles.add( zip.getName() + "!" + entry.getName() );
-                }
-                else if ( entry.getName().endsWith( ".jar" ) )
-                {
-                    JarInputStream jarInputStream = null;
-                    try
-                    {
-                        jarInputStream = new JarInputStream( zip.getInputStream( entry ) );
-                        ZipEntry nextEntry = jarInputStream.getNextEntry();
-                        while ( nextEntry != null )
-                        {
-                            System.out.println( "Inside Zip " + zip.getName() + " JAR " + entry.getName() + "!"
-                                    + nextEntry.getName() );
-                            jarInputStream.closeEntry();
-                            nextEntry = jarInputStream.getNextEntry();
-                        }
-                    }
-                    catch ( IOException e1 )
-                    {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                    finally
-                    {
-                        if ( jarInputStream != null )
-                        {
-                            try
-                            {
-                                jarInputStream.close();
-                            }
-                            catch ( IOException e )
-                            {
-                                // Nothing to do.
-                                e.printStackTrace();
-                            }
-                        }
-                    }
+            matchedFiles.addAll( searchEntry( zip, entries.nextElement(), null ) );
+        }
+        return matchedFiles;
+    }
 
-                    File file2 = new File( zip.getName() );
-                    URI uri = file2.toURI();
-                    try
+    private List< String > searchEntry( final ZipFile zip, final ZipEntry entry, final String nestedZipName )
+    {
+        LinkedList< String > matchedFiles = new LinkedList< String >();
+        if ( !entry.isDirectory() )
+        {
+            if ( ( ( !strictName && entry.getName().endsWith( this.fileNameToSearch ) ) || ( strictName && entry
+                    .getName().equals( this.fileNameToSearch ) ) ) )
+            {
+                matchedFiles.add( getEntryName( zip, entry, nestedZipName ) );
+            }
+            else if ( entry.getName().endsWith( ".jar" ) )
+            {
+                JarInputStream jarInputStream = null;
+                try
+                {
+                    jarInputStream = new JarInputStream( zip.getInputStream( entry ) );
+                    ZipEntry nextEntry = jarInputStream.getNextEntry();
+                    while ( nextEntry != null )
                     {
-                        StringBuilder stringBuilder = new StringBuilder( "jar:" );
-                        stringBuilder.append( uri.toURL().toString() );
-                        // JarURLConnection openConnection = (JarURLConnection) new URL( stringBuilder.append( "!/" )
-                        // .append( entry.getName() ).toString() ).openConnection();
-                        // Object content = openConnection.getContent();
-                        // List< String > lst1 = processEntries(jarFile.entries(), jarFile.getName());
+                        matchedFiles.addAll( searchEntry( zip, nextEntry, entry.getName() ) );
+                        jarInputStream.closeEntry();
+                        nextEntry = jarInputStream.getNextEntry();
                     }
-                    catch ( IOException e )
+                }
+                catch ( IOException e1 )
+                {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                finally
+                {
+                    if ( jarInputStream != null )
                     {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        try
+                        {
+                            jarInputStream.close();
+                        }
+                        catch ( IOException e )
+                        {
+                            // Nothing to do.
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
         }
         return matchedFiles;
+    }
+
+    private String getEntryName( ZipFile zip, ZipEntry entry, String nestedZipName )
+    {
+        StringBuilder sb = new StringBuilder( zip.getName() ).append( "!" );
+        if ( nestedZipName != null )
+        {
+            sb.append( nestedZipName ).append( "!" );
+        }
+        return sb.append( entry.getName() ).toString();
     }
 
     private CharSequence buildEntryLogMsg( List< File > dirs )
