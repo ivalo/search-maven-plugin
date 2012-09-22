@@ -19,7 +19,7 @@
   <!-- The Basics -->
   <groupId>jivalo.plugins</groupId>
   <artifactId>search-maven-plugin</artifactId>
-  <version>1.0</version>
+  <version>1.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <dependencies>
@@ -253,7 +253,7 @@
   <scm>
     <connection>${vcsUrl}/search-maven-plugin</connection>
     <developerConnection>${vcsUrl}/search-maven-plugin</developerConnection>
-    <tag>search-maven-plugin-1.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
