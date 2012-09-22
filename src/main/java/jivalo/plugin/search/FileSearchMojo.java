@@ -19,9 +19,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.jar.JarInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -39,7 +41,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 @Mojo( name = "file", requiresProject = false, threadSafe = true )
 public class FileSearchMojo extends AbstractMojo
 {
-
     private static String NL = System.getProperty( "line.separator" );
 
     /**
@@ -56,13 +57,14 @@ public class FileSearchMojo extends AbstractMojo
     private String fileNameToSearch;
 
     /**
-     * 
+     * If true then <code>fileNameToSearch</code> is fully qualified file name within Package (JAR,RAR,ZIP). Example:
+     * fi/jivalo/client/BaseBusinessDelegate.class
      */
     @Parameter( property = "strict", defaultValue = "true", required = false )
     private boolean strictName;
 
     /**
-     * 
+     * If true then also all sub directories of <code>directoryUris</code> is searched
      */
     @Parameter( property = "sub.dirs", defaultValue = "true", required = false )
     private boolean searchSubDirectories;
@@ -153,7 +155,7 @@ public class FileSearchMojo extends AbstractMojo
         LinkedList< String > list = new LinkedList< String >();
         for ( File file : dirs )
         {
-            LinkedList< String > processedDirectory = processDirectory( file );
+            List< String > processedDirectory = processDirectory( file );
             if ( processedDirectory != null && !processedDirectory.isEmpty() )
             {
                 list.addAll( processedDirectory );
@@ -162,9 +164,8 @@ public class FileSearchMojo extends AbstractMojo
         return list;
     }
 
-    private LinkedList< String > processDirectory( final File directory )
+    private List< String > processDirectory( final File directory )
     {
-        LinkedList< String > list = new LinkedList< String >();
         StringBuilder logMsg = new StringBuilder( "Start processing directory: " + directory );
         if ( null == directory || !directory.exists() )
         {
@@ -173,16 +174,21 @@ public class FileSearchMojo extends AbstractMojo
                 logMsg.append( " not found absolute path " + directory.getAbsolutePath() );
             }
             getLog().info( logMsg );
-            return list;
+            return new ArrayList< String >( 0 );
         }
         logMsg.append( " absolute path " + directory.getAbsolutePath() );
         getLog().debug( logMsg );
-        File[] listFiles = directory.listFiles();
+        return processFiles( directory.listFiles() );
+    }
+
+    private LinkedList< String > processFiles( File[] listFiles )
+    {
+        LinkedList< String > list = new LinkedList< String >();
         for ( File dirFile : listFiles )
         {
             if ( dirFile.isDirectory() && this.searchSubDirectories )
             {
-                LinkedList< String > dirList = processDirectory( dirFile );
+                List< String > dirList = processDirectory( dirFile );
                 if ( dirList != null && !dirList.isEmpty() )
                 {
                     list.addAll( dirList );
@@ -190,27 +196,22 @@ public class FileSearchMojo extends AbstractMojo
             }
             else
             {
-
                 LinkedList< String > matchedFiles = processFile( dirFile );
-
                 if ( matchedFiles != null && !matchedFiles.isEmpty() )
                 {
                     list.addAll( matchedFiles );
                 }
             }
         }
-
         return list;
     }
 
     private LinkedList< String > processFile( final File file )
     {
         LinkedList< String > matchedFile = new LinkedList< String >();
-
         try
         {
             String canonicalFile = file.getCanonicalPath();
-
             if ( canonicalFile.endsWith( this.fileNameToSearch ) )
             {
                 matchedFile.add( canonicalFile );
@@ -219,9 +220,7 @@ public class FileSearchMojo extends AbstractMojo
                     || canonicalFile.endsWith( ".rar" ) )
             {
                 ZipFile zipFile = new ZipFile( file );
-
                 matchedFile.addAll( searchEntries( zipFile ) );
-
                 zipFile.close();
             }
         }
@@ -230,31 +229,60 @@ public class FileSearchMojo extends AbstractMojo
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
         return matchedFile;
     }
 
-    private List< String > searchEntries( final ZipFile file )
+    private List< String > searchEntries( final ZipFile zip )
     {
-        Enumeration< ? extends ZipEntry > entries = file.entries();
-
+        Enumeration< ? extends ZipEntry > entries = zip.entries();
         LinkedList< String > matchedFiles = new LinkedList< String >();
-
         while ( entries.hasMoreElements() )
         {
             ZipEntry entry = entries.nextElement();
-
             if ( !entry.isDirectory() )
             {
-                if ( ( !strictName && entry.getName().endsWith( this.fileNameToSearch ) || strictName
-                        && entry.getName().substring( entry.getName().lastIndexOf( '/' ) + 1 )
-                                .equals( this.fileNameToSearch ) ) )
+                if ( ( ( !strictName && entry.getName().endsWith( this.fileNameToSearch ) ) || ( strictName && entry
+                        .getName().equals( this.fileNameToSearch ) ) ) )
                 {
-                    matchedFiles.add( file.getName() + "!" + entry.getName() );
+                    matchedFiles.add( zip.getName() + "!" + entry.getName() );
                 }
                 else if ( entry.getName().endsWith( ".jar" ) )
                 {
-                    File file2 = new File( file.getName() );
+                    JarInputStream jarInputStream = null;
+                    try
+                    {
+                        jarInputStream = new JarInputStream( zip.getInputStream( entry ) );
+                        ZipEntry nextEntry = jarInputStream.getNextEntry();
+                        while ( nextEntry != null )
+                        {
+                            System.out.println( "Inside Zip " + zip.getName() + " JAR " + entry.getName() + "!"
+                                    + nextEntry.getName() );
+                            jarInputStream.closeEntry();
+                            nextEntry = jarInputStream.getNextEntry();
+                        }
+                    }
+                    catch ( IOException e1 )
+                    {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                    finally
+                    {
+                        if ( jarInputStream != null )
+                        {
+                            try
+                            {
+                                jarInputStream.close();
+                            }
+                            catch ( IOException e )
+                            {
+                                // Nothing to do.
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    File file2 = new File( zip.getName() );
                     URI uri = file2.toURI();
                     try
                     {
@@ -273,7 +301,6 @@ public class FileSearchMojo extends AbstractMojo
                 }
             }
         }
-
         return matchedFiles;
     }
 
