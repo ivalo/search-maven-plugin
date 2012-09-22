@@ -22,7 +22,7 @@ Here is sample search plugin configuration:
       <plugin>
         <groupId>jivalo.plugins</groupId>
         <artifactId>search-maven-plugin</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
         <configuration>
           <directoryUris>
             <directoryUri>file:/home/markku/eclipse/plugins</directoryUri>
